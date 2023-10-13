@@ -2,58 +2,98 @@ from django.shortcuts import render
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from dg_user.models import UserModel
-from dg_user.serializer import UserSerializer, UserSerializerAll
-import argon2, binascii
-import re
-
-def createHashPassword(text):
-    hash = argon2.hash_password_raw(
-        time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32,
-        password=b'password', salt=b'some salt', type=argon2.low_level.Type.ID)
-    print("Argon2 raw hash:", binascii.hexlify(hash))
-    argon2Hasher = argon2.PasswordHasher(
-        time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
-    hash = argon2Hasher.hash(text)
-    return hash
-
-def validateHashPassword(hash, text):
-    # hash = "$argon2id$v=19$m=32768,t=16,p=2$cUolipL1iz81WcukKjOi6Q$MatHDbel8+4l4Mhfzw49Fzysb+klnKa8KwmFORUQjS4"
-    # t = re.findall(r't=\d+', hash)[0].split("=")[1]
-    # m = re.findall(r'm=\d+', hash)[0].split("=")[1]
-    # p = re.findall(r'p=\d+', hash)[0].split("=")[1]
-    # print(t, "T")
-    # print(m, "M")
-    # print(p, "P")
-    argon2Hasher = argon2.PasswordHasher(
-        time_cost=16, memory_cost=2**15, parallelism=2, hash_len=32, salt_len=16)
-    try:
-        argon2Hasher.verify(hash, text)
-        return True
-    except:
-        return False
+from dg_user.models import UserModel, user_directory_path
+from dg_user.serializer import UserInfoSerializer, UserInfoSummarySerializer
+from django.core.files.storage import FileSystemStorage
+from dg_auth.views import validateSession
+import time
+import os
 
 # Create your views here.
 
 class UserApiWeb(APIView):
     def get(self, request):
-        serializer = UserSerializerAll(UserModel.objects.all(), many=True)
-        return  Response(status=status.HTTP_200_OK, data=serializer.data)
+        # Response
+        response = Response()
+        response["Access-Control-Allow-Credentials"] = "true"
+        response["Access-Control-Allow-Origin"] = "http://127.0.0.1:70"
+        
+        try:
+            auth_token = request.COOKIES["dg_token_auth"]
+            user_id = request.COOKIES["dg_user_id"]
+        except Exception as e:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return response
+
+        # Validate session
+        isLogued = validateSession(token=auth_token, user_id=user_id)
+        if(isLogued == False):
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return response
+        serializer = UserInfoSummarySerializer(UserModel.objects.all(), many=True)
+        
+        response.status=status.HTTP_200_OK
+        response.data=serializer.data
+        return  response
     
-class UserApiWebDetail(APIView):
+class UserApiWebInfo(APIView):
     def get_object(self, pk):
         try:
             return UserModel.objects.get(pk=pk)
         except:
             return None
     
-    def get(self, request, id):
-        user = self.get_object(id)
-        serializer = UserSerializer(user)
-        return Response(status=status.HTTP_200_OK, data=serializer.data)
+    def get(self, request):
+        auth_token = request.COOKIES["dg_token_auth"]
+        user_id = request.COOKIES["dg_user_id"]
+        
+        # Response
+        response = Response()
+        response["Access-Control-Allow-Credentials"] = "true"
+        response["Access-Control-Allow-Origin"] = "http://127.0.0.1:70"
+        # Validate session
+        isLogued = validateSession(token=auth_token, user_id=user_id)
+        if(isLogued == False):
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return response
+            
+        user = self.get_object(user_id)
+        serializer = UserInfoSerializer(user)
+        response.data = serializer.data
+        response.status_code = status.HTTP_200_OK
+        
+        print(f"************* GET USER DATA **************")
+        print(f"{serializer.data}")
+        print(f"************* THE END GET USER DATA **************")
     
-    def delete(self, request, id):
-        user = self.get_object(id)
-        user.delete()
-        response = { 'delete': True}
-        return Response(status=status.HTTP_200_OK, data=response)
+        return response
+    
+    def post(self, request):
+        auth_token = request.COOKIES["dg_token_auth"]
+        user_id = request.COOKIES["dg_user_id"]
+        
+        # Response
+        response = Response()
+        response["Access-Control-Allow-Credentials"] = "true"
+        response["Access-Control-Allow-Origin"] = "http://127.0.0.1:70"
+        # Validate session
+        isLogued = validateSession(token=auth_token, user_id=user_id)
+        if(isLogued == False):
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return response
+        
+        now = time.time()
+        nowGmt = time.gmtime(now)
+        nowFormat = time.strftime("%Y-%m-%d %H:%M:%S", nowGmt)
+        
+        user = self.get_object(user_id)
+        user.fullname = request.POST["fullname"]
+        user.link = request.POST["link"]
+        user.link_text = request.POST["link_text"]
+        user.description = request.POST["description"]
+        user.updated_at = nowFormat
+        user.save()
+        
+        # Response
+        response.status_code = status.HTTP_200_OK
+        return response

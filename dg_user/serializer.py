@@ -18,3 +18,29 @@ class UserLoginSerializer(ModelSerializer):
         model = UserModel
         fields = ['id', 'user', 'password']
         # fields = '__all__'
+        
+class UserInfoSerializer(ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = [
+            "id",
+            "username",
+            "fullname",
+            "phone",
+            "email",
+            "image",
+            "description",
+            "link",
+            "link_text"
+        ]
+        # fields = '__all__'
+        
+class UserInfoSummarySerializer(ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = [
+            "id",
+            "username",
+            "fullname",
+            "image",
+        ]
