@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'dg_user',
     'dg_auth',
-    'dg_media'
+    'dg_media',
+    'dg_recommended',
+    'dg_post'
 ]
 
 MIDDLEWARE = [

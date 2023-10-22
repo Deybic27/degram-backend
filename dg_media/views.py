@@ -3,7 +3,11 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from dg_user.models import UserModel
+from dg_media.models import MediaModel
+from dg_post.models import PostModel
+from dg_post.serializer import PostSerializerAll
 from dg_user.serializer import UserInfoSerializer
+from dg_media.serializer import MediaSerializerAll
 from django.core.files.storage import FileSystemStorage
 from dg_auth.views import validateSession
 import time
@@ -76,5 +80,103 @@ class MediaUserApiWebUpload(APIView):
         print(f"Image: {pathSaved}")
         print(f"************* THE END USER IMAGE UPDATED **************")
         response.data = serializer.data["image"]
+        response.status_code = status.HTTP_200_OK
+        return response
+    
+class MediaPostApiWebUpload(APIView):
+    def get_user(self, pk):
+        try:
+            return UserModel.objects.get(pk=pk)
+        except:
+            return None
+        
+    def get_media(self, pk):
+        try:
+            return MediaModel.objects.get(pk=pk)
+        except:
+            return None
+        
+    def get_post(self, pk):
+        try:
+            return PostModel.objects.get(pk=pk)
+        except:
+            return None
+    
+    def post(self,request):
+        # Response
+        response = Response()
+        response["Access-Control-Allow-Credentials"] = "true"
+        response["Access-Control-Allow-Origin"] = "http://127.0.0.1:70"
+        
+        try:
+            auth_token = request.COOKIES["dg_token_auth"]
+            user_id = request.COOKIES["dg_user_id"]
+        except Exception as e:
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return response
+        
+        # Validate session
+        isLogued = validateSession(token=auth_token, user_id=user_id)
+        if(isLogued == False):
+            response.status_code = status.HTTP_401_UNAUTHORIZED
+            return response
+        
+        CONTENT_TYPES_ACCEPTED = {
+            "image/jpeg": "jpg",
+            "image/png": "png"
+        }
+        image = request.FILES.get('image')
+        
+        try:
+            CONTENT_TYPES_ACCEPTED[image.content_type]
+        except Exception as e:
+            response.status_code = status.HTTP_406_NOT_ACCEPTABLE
+            response.data = [{"TYPES_ACCEPTED": CONTENT_TYPES_ACCEPTED},{"TYPES_NOT_ACCEPTED": e.args}]
+            return response
+
+        # Create post
+        user = self.get_user(user_id)
+        data = {
+            "description": "",
+            "status": 0,
+            "user": user.pk
+        }
+        postSerializer = PostSerializerAll(data=data)
+        postSerializer.is_valid(raise_exception=True)
+        postSerializer.save()
+
+        now = time.time()
+        nowGmt = time.gmtime(now)
+        nowFormat = time.strftime("%Y-%m-%d %H:%M:%S", nowGmt)
+
+        folder = os.path.join("posts", f"{postSerializer.data['id']}")
+        newName = f"{folder}/{now}.{CONTENT_TYPES_ACCEPTED[image.content_type]}"
+        
+        # Save file
+        pathSaved = FileSystemStorage().save(newName, image)
+        print("*******--- ", type(pathSaved))
+
+        # Create media
+        data = {
+            "model_type": "media",
+            "model_id": postSerializer.data['id'],
+            "path": pathSaved,
+            "title": image.name
+        }
+        media = MediaModel.objects.create(
+            model_type="MediaModel",
+            model_id=postSerializer.data['id'],
+            path=pathSaved,
+            title=image.name
+        )
+        mediaSerializer = MediaSerializerAll(media)
+        
+        
+        print(f"************* USER IMAGE UPDATED **************")
+        print(f"{postSerializer.data['id']}: {postSerializer.data['description']}")
+        print(f"{mediaSerializer.data['id']}: {mediaSerializer.data['model_type']}")
+        print(f"Image: {pathSaved}")
+        print(f"************* THE END USER IMAGE UPDATED **************")
+        response.data = mediaSerializer.data["path"]
         response.status_code = status.HTTP_200_OK
         return response

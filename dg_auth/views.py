@@ -141,6 +141,9 @@ class UserAuthApiWebRegister(APIView):
         serializer.save()
         
         id = serializer.data["id"]
+        user = UserModel.objects.get(pk=id)
+        user.image = "users/icon-user.jpg"
+        user.save()
         token = createSession(request=request, user_id=id)
         # Response
         response = Response()

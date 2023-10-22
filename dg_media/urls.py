@@ -1,6 +1,7 @@
 from django.urls import path
-from dg_media.views import MediaUserApiWebUpload
+from dg_media.views import MediaUserApiWebUpload, MediaPostApiWebUpload
 
 urlpatterns_dg_media = [
     path('v1/medias/user/upload', MediaUserApiWebUpload.as_view()),
+    path('v1/medias/post/upload', MediaPostApiWebUpload.as_view()),
 ]
