@@ -23,6 +23,7 @@ from dg_auth.urls import urlpatterns_dg_auth
 from dg_media.urls import urlpatterns_dg_media
 from dg_recommended.urls import urlpatterns_dg_recommended
 from dg_post.urls import urlpatterns_dg_post
+from dg_api.urls import urlpatterns_dg_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,4 +32,5 @@ urlpatterns = [
     path('api/', include(urlpatterns_dg_media)),
     path('api/', include(urlpatterns_dg_recommended)),
     path('api/', include(urlpatterns_dg_post)),
+    path('api/', include(urlpatterns_dg_api)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

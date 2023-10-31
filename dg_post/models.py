@@ -9,7 +9,7 @@ class PostModel(models.Model):
         (2, "only_for_me"),
     ]
     description = models.CharField(blank=True)
-    status = models.SmallIntegerField(choices=STATUS)
+    status = models.SmallIntegerField(choices=STATUS, default=1)
     user = models.ForeignKey(UserModel, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(null=True)

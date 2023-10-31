@@ -9,6 +9,12 @@ from dg_auth.views import validateSession
 import time
 
 # Create your views here.
+class User():
+    def get(pk):
+        try:
+            return UserModel.objects.get(pk=pk)
+        except:
+            return None
     
 class UserApiWebInfo(APIView):
     def get_object(self, pk):
