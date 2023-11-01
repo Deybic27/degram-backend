@@ -1,5 +1,6 @@
 from dg_post.models import PostModel
 from dg_post.serializer import PostSerializerAll
+from dg_media.models import MediaModel
 
 # Create your views here.
 class Post():
@@ -8,7 +9,19 @@ class Post():
             return PostModel.objects.get(pk=pk)
         except:
             return None
+
+    def all():
+        try:
+            return PostModel.objects.all()
+        except:
+            return None
         
+    def media(pk):
+        try:
+            return MediaModel.objects.filter(model_id=pk, deleted_at=None)
+        except:
+            return None
+
     def create(description, user):
         data = {
             "description": description,

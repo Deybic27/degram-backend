@@ -44,3 +44,8 @@ class UserInfoSummarySerializer(ModelSerializer):
             "fullname",
             "image",
         ]
+        
+class UserInfoBasicSerializer(ModelSerializer):
+    class Meta:
+        model = UserModel
+        fields = ['id', 'username', 'image']

@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from dg_user.models import UserModel, user_directory_path
 from dg_user.serializer import UserInfoSerializer, UserInfoSummarySerializer
 from dg_auth.views import validateSession
+from dg_post.models import PostModel
 import time
 
 # Create your views here.
@@ -13,6 +14,12 @@ class User():
     def get(pk):
         try:
             return UserModel.objects.get(pk=pk)
+        except:
+            return None
+    
+    def posts(pk):
+        try:
+            return PostModel.objects.filter(user_id=pk, deleted_at=None)
         except:
             return None
     

@@ -6,3 +6,8 @@ class MediaSerializerAll(ModelSerializer):
         model = MediaModel
         # fields = ['id', 'user', 'phone', "email"]
         fields = '__all__'
+        
+class MediaInfoSerializer(ModelSerializer):
+    class Meta:
+        model = MediaModel
+        fields = ['id', 'path', 'title', 'format']

@@ -6,3 +6,8 @@ class PostSerializerAll(ModelSerializer):
         model = PostModel
         # fields = ['id', 'user', 'phone', "email"]
         fields = '__all__'
+
+class PostInfoSerializer(ModelSerializer):
+    class Meta:
+        model = PostModel
+        fields = ['id', 'description', 'status', 'created_at', 'user']

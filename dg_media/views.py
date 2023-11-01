@@ -15,12 +15,12 @@ import os
 
 # Create your views here.
 class Media():        
-    def get_media(self, pk):
+    def get(self, pk):
         try:
             return MediaModel.objects.get(pk=pk)
         except:
             return None
-        
+    
     def create(model_name, model_id, image, image_format):
         CONTENT_TYPES_ACCEPTED = {
             "image/jpeg": "jpg",
